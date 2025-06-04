@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <sstream>
 #include <fstream>
+#include <locale.h>
+#include <clocale>
 
 #define HIST_MAX 30
 #define MAX_CONTAS 5
@@ -49,46 +51,46 @@ public:
 
     int identificador() {
         int numero = 0;
-        
+
         for (int i = 0; i < 10; ++i) {
             int digito = rand() % 10;
             if (i == 0 && digito == 0)
                 digito = 1;
             numero = numero * 10 + digito;
         }
-        
+
         return abs(numero);
     }
 
     void depositar() {
         double deposito;
         bool invalido;
-        
+
         do {
             invalido = false;
             cout << "Valor do Deposito ($): ";
             cin >> deposito;
             if (deposito <= 0) {
-                cout << "Valor Inválido." << endl;
+                cout << "Valor Invalido." << endl;
                 invalido = true;
             }
         } while (invalido);
 
         saldo += deposito;
-        adicionarHistorico("Depósito", deposito);
-        cout << "Depósito de R$ " << fixed << setprecision(2) << deposito << " efetuado com sucesso!" << endl;
+        adicionarHistorico("Deposito", deposito);
+        cout << "Deposito de R$ " << fixed << setprecision(2) << deposito << " Efetuado com Sucesso!" << endl;
     }
 
     void sacar() {
         double saque;
         bool invalido;
-        
+
         do {
             invalido = false;
             cout << "Valor do Saque ($): ";
             cin >> saque;
             if (saque <= 0 || saque > saldo) {
-                cout << "Valor Inválido." << endl;
+                cout << "Valor Invalido." << endl;
                 invalido = true;
             }
         } while (invalido);
@@ -103,11 +105,11 @@ public:
     }
 
     void mostrarDados() {
-        cout << "\nInformações da Conta:" << endl;
+        cout << "\nInformacoes da Conta:" << endl;
         cout << "ID: " << id << endl;
         cout << "Nome: " << nome << endl;
         cout << fixed << setprecision(2) << "Saldo: R$ " << saldo << endl;
-        cout << "Total de Transações: " << totalTransacoes << endl;
+        cout << "Total de Transacoes: " << totalTransacoes << endl;
     }
 
     void adicionarHistorico(const string& tipo, double valor) {
@@ -118,18 +120,18 @@ public:
             for (int i = 1; i < HIST_MAX; i++) {
                 historico[i - 1] = historico[i];
             }
-            
+
             historico[HIST_MAX - 1] = {dataAtual(), tipo, valor};
         }
     }
 
     void mostrarHistorico() {
         if (totalTransacoes == 0) {
-            cout << "Sem Histórico de Transações." << endl;
+            cout << "Sem Historico de Transacoes." << endl;
             return;
         }
 
-        cout << "\nHistórico de Transações:" << endl;
+        cout << "\nHistorico de Transacoes:" << endl;
         for (int i = 0; i < totalTransacoes; i++) {
             cout << historico[i].data << " - "
                  << historico[i].tipo << ": R$ " << fixed << setprecision(2) << historico[i].valor << endl;
@@ -140,19 +142,19 @@ public:
         double valor;
         int idRecep;
 
-        cout << "\nTransferência:" << endl;
+        cout << "\nTransferencia:" << endl;
         cout << "Valor ($): ";
         cin >> valor;
         cout << "ID do Receptor: ";
         cin >> idRecep;
 
         if (valor <= 0 || valor > saldo) {
-            cout << "Valor Inválido." << endl;
+            cout << "Valor Invalido." << endl;
             return;
         }
 
         contaBancaria* receptor = nullptr;
-        
+
         for (int i = 0; i < totalContas; i++) {
             if (contas[i].getID() == idRecep) {
                 receptor = &contas[i];
@@ -161,17 +163,17 @@ public:
         }
 
         if (receptor == nullptr) {
-            cout << "Conta Receptora Não Encontrada." << endl;
+            cout << "Conta Receptora Nao Encontrada." << endl;
             return;
         }
 
         saldo -= valor;
         receptor -> saldo += valor;
 
-        adicionarHistorico("Transferência Enviada", valor);
-        receptor -> adicionarHistorico("Transferência Recebida", valor);
+        adicionarHistorico("Transferencia Enviada", valor);
+        receptor -> adicionarHistorico("Transferencia Recebida", valor);
 
-        cout << "Transferência de R$ " << fixed << setprecision(2) << valor
+        cout << "Transferencia de R$ " << fixed << setprecision(2) << valor
              << " Realizada para ID " << idRecep << "." << endl;
     }
 
@@ -186,26 +188,26 @@ public:
     void criarConta() {
         cout << "Nome da Conta: ";
         getline(cin >> ws, nome);
-        
+
         id = identificador();
         cout << "Conta Criada com ID: " << id << endl;
     }
 
     void salvarConta() {
         ofstream arquivo("conta_" + to_string(id) + ".txt");
-        
+
         if (arquivo.is_open()) {
             arquivo << nome << endl;
             arquivo << saldo << endl;
             arquivo << id << endl;
             arquivo << totalTransacoes << endl;
-            
+
             for (int i = 0; i < totalTransacoes; i++) {
-                arquivo << historico[i].data << "/"
-                        << historico[i].tipo << "/"
+                arquivo << historico[i].data << "_"
+                        << historico[i].tipo << "_"
                         << historico[i].valor << endl;
             }
-            
+
             arquivo.close();
         } else {
             cout << "Erro ao Salvar Conta!" << endl;
@@ -214,27 +216,27 @@ public:
 
     bool carregarConta(int buscaID) {
         ifstream arquivo("conta_" + to_string(buscaID) + ".txt");
-        
+
         if (!arquivo.is_open()) {
             return false;
         }
 
         getline(arquivo >> ws, nome);
         arquivo >> saldo >> id >> totalTransacoes;
-        
+
         string linha;
         getline(arquivo, linha);
 
         for (int i = 0; i < totalTransacoes; i++) {
             getline(arquivo, linha);
-            
+
             stringstream ss(linha);
             string data, tipo, valorStr;
-    
-            getline(ss, data, '/');
-            getline(ss, tipo, '/');
+
+            getline(ss, data, '_');
+            getline(ss, tipo, '_');
             getline(ss, valorStr);
-            
+
             historico[i] = {data, tipo, stod(valorStr)};
         }
 
@@ -250,10 +252,10 @@ void mostrarMenu() {
     cout << "2. Sacar" << endl;
     cout << "3. Mostrar Saldo" << endl;
     cout << "4. Mostrar Dados da Conta" << endl;
-    cout << "5. Mostrar Histórico" << endl;
-    cout << "6. Fazer Transferência" << endl;
+    cout << "5. Mostrar Historico" << endl;
+    cout << "6. Fazer Transferencia" << endl;
     cout << "7. Salvar & Sair" << endl;
-    cout << "Escolha uma opção: ";
+    cout << "Escolha uma Opcao: ";
 }
 
 int main() {
@@ -262,13 +264,13 @@ int main() {
     contaBancaria contas[MAX_CONTAS];
     int totalContas = 0;
     contaBancaria* cliente = nullptr;
-    
+
     bool finalizar = false;
 
-    cout << "--- Simulador de Conta Bancária ---" << endl;
+    cout << "--- Simulador de Conta Bancaria ---" << endl;
 
     int escolhaInicial;
-    
+
     do {
         cout << "\nMenu Inicial:" << endl;
         cout << "1. Criar Nova Conta" << endl;
@@ -279,14 +281,14 @@ int main() {
 
         if (escolhaInicial == 1) {
             if (totalContas >= MAX_CONTAS) {
-                cout << "Limite Máximo de Contas Atingido." << endl;
+                cout << "Limite Maximo de Contas Atingido." << endl;
                 continue;
             }
-            
+
             cliente = &contas[totalContas];
             cliente -> criarConta();
             cliente -> salvarConta();
-            
+
             totalContas++;
         } else if (escolhaInicial == 2) {
             int idBusca;
@@ -294,31 +296,32 @@ int main() {
             cin >> idBusca;
 
             cliente = nullptr;
-            
-            for (int i = 0; i < totalContas; i++) {
-                if (contas[i].carregarConta(idBusca)) {
-                    cliente = &contas[i];
-                    break;
-                }
+
+            contaBancaria tempConta;
+
+            if (tempConta.carregarConta(idBusca)) {
+                contas[totalContas] = tempConta;
+                cliente = &contas[totalContas];
+                totalContas++;
+
+                cout << "Conta Acessada com Sucesso!" << endl;
             }
-            
-            if (cliente == nullptr) {   
-                cout << "Conta Não Encontrada." << endl;
+
+            if (cliente == nullptr) {
+                cout << "Conta Nao Encontrada." << endl;
                 continue;
             }
-            
-            cout << "Conta Acessada com Sucesso!" << endl;
         } else if (escolhaInicial == 3) {
-            cout << "\nSimulação Finalizada." << endl;
+            cout << "\nSimulacao Finalizada." << endl;
             finalizar = true;
-        } else { 
-            cout << "\nOpção Inválida." << endl;
+        } else {
+            cout << "\nOpcao Invalida." << endl;
             continue;
         }
 
         if (cliente != nullptr) {
             int opcao;
-            
+
             do {
                 mostrarMenu();
                 cin >> opcao;
@@ -345,11 +348,11 @@ int main() {
                     case 7:
                         cout << "Salvando e Saindo da Conta..." << endl;
                         cliente -> salvarConta();
-                        
+
                         cliente = nullptr;
                         break;
                     default:
-                        cout << "Opção inválida." << endl;
+                        cout << "Opcao Invalida." << endl;
                         break;
                 }
             } while (opcao != 7);
